@@ -22,6 +22,9 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { ModeToggle } from "@/components/mode-toggle"
+import { MermaidDiagram } from "@/components/architecture/mermaid-diagram"
+import { C4Diagram } from "@/components/architecture/c4-diagram"
+import { AWSArchitecture } from "@/components/architecture/aws-architecture"
 
 export default function ArchitecturePage() {
   const [simulateFailure, setSimulateFailure] = useState(false)
@@ -65,6 +68,26 @@ export default function ArchitecturePage() {
   const healthyCount = architecture.nodes.filter((node) => node.status === "healthy").length
   const degradedCount = architecture.nodes.filter((node) => node.status === "degraded").length
   const downCount = architecture.nodes.filter((node) => node.status === "down").length
+
+  // Basic mermaid diagram for the microservices
+  const basicMermaidDiagram = `graph TD
+    Client[Web Client] --> Gateway[API Gateway]
+    Gateway --> UserService[User Service]
+    Gateway --> CourseService[Course Service]
+    Gateway --> AssessmentService[Assessment Service]
+    Gateway --> GradingService[Grading Service]
+    
+    UserService --> UserDB[(User Database)]
+    CourseService --> CourseDB[(Course Database)]
+    AssessmentService --> AssessmentDB[(Assessment Database)]
+    GradingService --> GradeDB[(Grade Database)]
+    
+    UserService --> Queue{Message Queue}
+    CourseService --> Queue
+    AssessmentService --> Queue
+    GradingService --> Queue
+    
+    Queue --> NotificationService[Notification Service]`
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -142,7 +165,8 @@ export default function ArchitecturePage() {
 
           <Tabs defaultValue="c4" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="c4">C4 Diagram</TabsTrigger>
+              <TabsTrigger value="c4">C4 Diagrams</TabsTrigger>
+              <TabsTrigger value="aws">AWS Architecture</TabsTrigger>
               <TabsTrigger value="mermaid">Mermaid Diagram</TabsTrigger>
               <TabsTrigger value="structurizr">Structurizr C4</TabsTrigger>
               <TabsTrigger value="terraform">Terraform</TabsTrigger>
@@ -151,45 +175,19 @@ export default function ArchitecturePage() {
             </TabsList>
 
             <TabsContent value="c4" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>System Context Diagram</CardTitle>
-                  <CardDescription>C4 model showing the microservices architecture</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-md border p-4 bg-muted/50">
-                    <div className="mb-4">
-                      <ArchitectureDiagram architecture={architecture} />
-                    </div>
-                    <div className="flex items-center justify-center gap-4 text-sm">
-                      <div className="flex items-center gap-1">
-                        <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                        <span>Healthy</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
-                        <span>Degraded</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                        <span>Down</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="grid gap-4">
+                <C4Diagram level="context" title="yLearn LMS" />
+                <C4Diagram level="container" title="yLearn LMS" />
+                <C4Diagram level="component" title="yLearn LMS" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="aws" className="space-y-4">
+              <AWSArchitecture />
             </TabsContent>
 
             <TabsContent value="mermaid" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Mermaid Diagram</CardTitle>
-                  <CardDescription>Flowchart representation using Mermaid syntax</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MermaidDiagram />
-                </CardContent>
-              </Card>
+              <MermaidDiagram definition={basicMermaidDiagram} caption="Microservices Architecture" type="flowchart" />
             </TabsContent>
 
             <TabsContent value="structurizr" className="space-y-4">
@@ -351,124 +349,6 @@ function ServiceCard({ service }: { service: MicroserviceNode }) {
   )
 }
 
-function ArchitectureDiagram({ architecture }: { architecture: typeof mockArchitecture }) {
-  return (
-    <div className="w-full overflow-auto">
-      <div className="min-w-[800px] min-h-[500px] p-4">
-        {/* This is a placeholder for the actual diagram */}
-        {/* In a real implementation, you would use a library like ReactFlow or mermaid.js */}
-        <div className="w-full h-full flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-muted-foreground mb-4">C4 Diagram Visualization</p>
-
-            {/* Mermaid diagram would be rendered here */}
-            <div className="border rounded-md p-4 bg-white dark:bg-gray-900">
-              <pre className="text-xs text-left overflow-auto">
-                {`graph TD
-  Client[Web Client] --> Gateway[API Gateway]
-  Gateway --> UserService[User Service]
-  Gateway --> CourseService[Course Service]
-  Gateway --> AssessmentService[Assessment Service]
-  Gateway --> GradingService[Grading Service]
-  
-  UserService --> UserDB[(User Database)]
-  CourseService --> CourseDB[(Course Database)]
-  AssessmentService --> AssessmentDB[(Assessment Database)]
-  GradingService --> GradeDB[(Grade Database)]
-  
-  UserService --> Queue{Message Queue}
-  CourseService --> Queue
-  AssessmentService --> Queue
-  GradingService --> Queue
-  
-  Queue --> NotificationService[Notification Service]`}
-              </pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MermaidDiagram() {
-  const [copied, setCopied] = useState(false)
-
-  // This is Mermaid syntax for a flowchart diagram
-  const diagramCode = `graph TD
-  Client[Web Client] --> Gateway[API Gateway]
-  Gateway --> UserService[User Service]
-  Gateway --> CourseService[Course Service]
-  Gateway --> AssessmentService[Assessment Service]
-  Gateway --> GradingService[Grading Service]
-  
-  UserService --> UserDB[(User Database)]
-  CourseService --> CourseDB[(Course Database)]
-  AssessmentService --> AssessmentDB[(Assessment Database)]
-  GradingService --> GradeDB[(Grade Database)]
-  
-  UserService --> Queue{Message Queue}
-  CourseService --> Queue
-  AssessmentService --> Queue
-  GradingService --> Queue
-  
-  Queue --> NotificationService[Notification Service]`
-
-  // Create a URL for mermaid.live with our diagram code
-  const mermaidLiveUrl = `https://mermaid.live/edit#${encodeURIComponent(diagramCode)}`
-
-  const copyDiagramCode = () => {
-    navigator.clipboard.writeText(diagramCode)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
-
-  return (
-    <div className="w-full overflow-auto">
-      <div className="min-w-[800px] p-4">
-        <div className="w-full flex items-center justify-center">
-          <div className="text-center w-full">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-muted-foreground">Mermaid Diagram Visualization</p>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={mermaidLiveUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1"
-                  >
-                    <span>Open in Mermaid Live</span>
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
-                <Button variant="outline" size="sm" onClick={copyDiagramCode} className="flex items-center gap-1">
-                  {copied ? (
-                    <>
-                      <Check className="h-4 w-4" />
-                      <span>Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      <span>Copy Code</span>
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-
-            {/* Mermaid diagram would be rendered here */}
-            <div className="border rounded-md p-4 bg-white dark:bg-gray-900">
-              <pre className="text-xs text-left overflow-auto whitespace-pre">{diagramCode}</pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function StructurizrDiagram() {
   const [copied, setCopied] = useState(false)
 
@@ -477,7 +357,7 @@ function StructurizrDiagram() {
   model {
       user = person "Student/Instructor" "A user of the yLearn LMS"
       
-      enterprise "yLearn LMS" {
+      group "yLearn LMS" {
           // Software systems
           lmsSystem = softwareSystem "yLearn LMS" "Learning Management System for university settings" {
               // Containers
